@@ -1,0 +1,263 @@
+### =====================================================================
+### LMS Microservices — IntelliJ HTTP Client test suite
+### Run via the green ▶ arrow next to each request (top to bottom, in order —
+### later requests reuse variables captured from earlier ones).
+### All requests go through the api-gateway on :8080.
+### Requires: all 6 services running. (Tools > HTTP Client > Show HTTP Requests
+### History lets you see past runs; responses appear in a split pane.)
+### =====================================================================
+
+@baseUrl = http://localhost:8080
+
+### 0. Gateway health check
+GET {{baseUrl}}/actuator/health
+
+
+### =====================================================================
+### AUTH
+### =====================================================================
+
+### 1. Register an instructor
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "prof_demo",
+  "email": "prof_demo@example.com",
+  "password": "Passw0rd!",
+  "role": "INSTRUCTOR"
+}
+
+> {%
+    client.global.set("instructorId", response.body.id);
+%}
+
+### 2. Register a student
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "student_demo",
+  "email": "student_demo@example.com",
+  "password": "Passw0rd!",
+  "role": "STUDENT"
+}
+
+> {%
+    client.global.set("studentUserId", response.body.id);
+%}
+
+### 3. Login as instructor (captures token for later requests)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "prof_demo",
+  "password": "Passw0rd!"
+}
+
+> {%
+    client.global.set("instructorToken", response.body.token);
+%}
+
+### 4. Login as student (captures token for later requests)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "student_demo",
+  "password": "Passw0rd!"
+}
+
+> {%
+    client.global.set("studentToken", response.body.token);
+%}
+
+### 5. Get current user (proves the instructor token works)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{instructorToken}}
+
+### 6. Negative test: wrong password should fail with 401
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "prof_demo",
+  "password": "WrongPassword"
+}
+
+### 7. Negative test: no token on a protected route should fail with 401
+GET {{baseUrl}}/api/courses
+
+
+### =====================================================================
+### COURSE
+### =====================================================================
+
+### 8. Create a course (as instructor)
+POST {{baseUrl}}/api/courses
+Authorization: Bearer {{instructorToken}}
+Content-Type: application/json
+
+{
+  "title": "Intro to DevOps",
+  "description": "CI/CD, containers, Kubernetes",
+  "instructorId": {{instructorId}},
+  "credits": 3,
+  "category": "Engineering"
+}
+
+> {%
+    client.global.set("courseId", response.body.id);
+%}
+
+### 9. Publish the course
+PATCH {{baseUrl}}/api/courses/{{courseId}}/publish
+Authorization: Bearer {{instructorToken}}
+
+### 10. Add a module to the course
+POST {{baseUrl}}/api/modules
+Authorization: Bearer {{instructorToken}}
+Content-Type: application/json
+
+{
+  "courseId": {{courseId}},
+  "title": "Week 1: Docker basics",
+  "content": "Images, containers, Dockerfile",
+  "orderIndex": 1,
+  "durationMinutes": 45
+}
+
+### 11. Get course details (with modules)
+GET {{baseUrl}}/api/courses/{{courseId}}/details
+Authorization: Bearer {{studentToken}}
+
+
+### =====================================================================
+### STUDENT & ENROLLMENT
+### =====================================================================
+
+### 12. Create student profile
+POST {{baseUrl}}/api/students
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "userId": {{studentUserId}},
+  "fullName": "Demo Student",
+  "email": "student_demo@example.com",
+  "major": "Computer Science",
+  "enrollmentYear": 2026
+}
+
+> {%
+    client.global.set("studentProfileId", response.body.id);
+%}
+
+### 13. Enroll student in the course
+POST {{baseUrl}}/api/enrollments
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "studentId": {{studentProfileId}},
+  "courseId": {{courseId}}
+}
+
+> {%
+    client.global.set("enrollmentId", response.body.id);
+%}
+
+### 14. Update progress to 100% (should auto-complete)
+PATCH {{baseUrl}}/api/enrollments/{{enrollmentId}}/progress
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "progressPercent": 100
+}
+
+
+### =====================================================================
+### ASSIGNMENT
+### =====================================================================
+
+### 15. Create an assignment (as instructor)
+POST {{baseUrl}}/api/assignments
+Authorization: Bearer {{instructorToken}}
+Content-Type: application/json
+
+{
+  "courseId": {{courseId}},
+  "title": "Dockerfile Lab",
+  "description": "Write a multi-stage Dockerfile",
+  "maxScore": 100,
+  "createdBy": {{instructorId}}
+}
+
+> {%
+    client.global.set("assignmentId", response.body.id);
+%}
+
+### 16. Submit the assignment (as student)
+POST {{baseUrl}}/api/submissions
+Authorization: Bearer {{studentToken}}
+Content-Type: application/json
+
+{
+  "assignmentId": {{assignmentId}},
+  "studentId": {{studentProfileId}},
+  "content": "https://github.com/demo/dockerfile-lab"
+}
+
+> {%
+    client.global.set("submissionId", response.body.id);
+%}
+
+### 17. Grade the submission (as instructor)
+PATCH {{baseUrl}}/api/submissions/{{submissionId}}/grade
+Authorization: Bearer {{instructorToken}}
+Content-Type: application/json
+
+{
+  "score": 92,
+  "feedback": "Great work, minor layer-caching issue",
+  "gradedBy": {{instructorId}}
+}
+
+### 18. Negative test: grading above maxScore should fail with 400
+PATCH {{baseUrl}}/api/submissions/{{submissionId}}/grade
+Authorization: Bearer {{instructorToken}}
+Content-Type: application/json
+
+{
+  "score": 999,
+  "feedback": "oops",
+  "gradedBy": {{instructorId}}
+}
+
+
+### =====================================================================
+### NOTIFICATION
+### =====================================================================
+
+### 19. Send a grade notification to the student
+POST {{baseUrl}}/api/notifications
+Authorization: Bearer {{instructorToken}}
+Content-Type: application/json
+
+{
+  "userId": {{studentUserId}},
+  "title": "Assignment graded",
+  "message": "You scored 92/100 on Dockerfile Lab",
+  "type": "GRADE",
+  "channel": "IN_APP"
+}
+
+### 20. List notifications for the student
+GET {{baseUrl}}/api/notifications/user/{{studentUserId}}
+Authorization: Bearer {{studentToken}}
+
+### 21. Unread notification count
+GET {{baseUrl}}/api/notifications/user/{{studentUserId}}/unread-count
+Authorization: Bearer {{studentToken}}

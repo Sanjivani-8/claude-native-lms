@@ -1,0 +1,24 @@
+# Requires an Ingress controller in the cluster (e.g. ingress-nginx).
+# For local clusters (minikube/kind) without a real domain, add to /etc/hosts:
+#   127.0.0.1  lms.local
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lms-ingress
+  namespace: lms
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: lms.local
+      http:
+        paths:
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8080

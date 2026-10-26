@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+        - id: student-service
+          uri: ${STUDENT_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/students/**,/api/enrollments/**
+        - id: course-service
+          uri: ${COURSE_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/courses/**,/api/modules/**
+        - id: assignment-service
+          uri: ${ASSIGNMENT_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/assignments/**,/api/submissions/**
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/notifications/**
+
+jwt:
+  secret: "ChangeThisSecretKeyForLMSProjectJWTSigningMinimum256BitsLong!"
+  # Paths that do NOT require a valid Authorization header. Ant-style, matched against the request path.
+  public-paths:
+    - /api/auth/register
+    - /api/auth/login
+    - /api/auth/health
+    - /actuator/**
+    - /fallback/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO

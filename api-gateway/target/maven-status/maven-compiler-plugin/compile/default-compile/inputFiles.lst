@@ -1,0 +1,5 @@
+/Users/sbhosale2/Desktop/Mtech final Sem/Final Project code/lms-project/api-gateway/src/main/java/com/lms/gateway/ApiGatewayApplication.java
+/Users/sbhosale2/Desktop/Mtech final Sem/Final Project code/lms-project/api-gateway/src/main/java/com/lms/gateway/config/JwtProperties.java
+/Users/sbhosale2/Desktop/Mtech final Sem/Final Project code/lms-project/api-gateway/src/main/java/com/lms/gateway/controller/FallbackController.java
+/Users/sbhosale2/Desktop/Mtech final Sem/Final Project code/lms-project/api-gateway/src/main/java/com/lms/gateway/filter/JwtAuthenticationFilter.java
+/Users/sbhosale2/Desktop/Mtech final Sem/Final Project code/lms-project/api-gateway/src/main/java/com/lms/gateway/security/JwtSupport.java

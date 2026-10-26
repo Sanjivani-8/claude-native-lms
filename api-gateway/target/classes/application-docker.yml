@@ -1,0 +1,24 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://auth-service:8081}
+          predicates:
+            - Path=/api/auth/**
+        - id: student-service
+          uri: ${STUDENT_SERVICE_URL:http://student-service:8082}
+          predicates:
+            - Path=/api/students/**,/api/enrollments/**
+        - id: course-service
+          uri: ${COURSE_SERVICE_URL:http://course-service:8083}
+          predicates:
+            - Path=/api/courses/**,/api/modules/**
+        - id: assignment-service
+          uri: ${ASSIGNMENT_SERVICE_URL:http://assignment-service:8084}
+          predicates:
+            - Path=/api/assignments/**,/api/submissions/**
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8085}
+          predicates:
+            - Path=/api/notifications/**

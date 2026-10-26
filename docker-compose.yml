@@ -1,0 +1,152 @@
+version: "3.8"
+
+# Local multi-container orchestration for the LMS microservices.
+# Usage:
+#   docker compose build
+#   docker compose up -d
+#   docker compose logs -f api-gateway
+#
+# Gateway is the only port meant to be called by clients: http://localhost:8080
+# Each service also exposes its own port directly for local debugging / H2 console access.
+
+x-common-env: &common-env
+  JWT_SECRET: "ChangeThisSecretKeyForLMSProjectJWTSigningMinimum256BitsLong!"
+
+services:
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    image: lms/auth-service:1.0.0
+    container_name: lms-auth-service
+    environment:
+      <<: *common-env
+      JWT_EXPIRATION_MS: "3600000"
+    ports:
+      - "8081:8081"
+    volumes:
+      - auth-data:/data
+    networks:
+      - lms-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  student-service:
+    build:
+      context: .
+      dockerfile: student-service/Dockerfile
+    image: lms/student-service:1.0.0
+    container_name: lms-student-service
+    ports:
+      - "8082:8082"
+    volumes:
+      - student-data:/data
+    networks:
+      - lms-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  course-service:
+    build:
+      context: .
+      dockerfile: course-service/Dockerfile
+    image: lms/course-service:1.0.0
+    container_name: lms-course-service
+    ports:
+      - "8083:8083"
+    volumes:
+      - course-data:/data
+    networks:
+      - lms-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  assignment-service:
+    build:
+      context: .
+      dockerfile: assignment-service/Dockerfile
+    image: lms/assignment-service:1.0.0
+    container_name: lms-assignment-service
+    ports:
+      - "8084:8084"
+    volumes:
+      - assignment-data:/data
+    networks:
+      - lms-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    image: lms/notification-service:1.0.0
+    container_name: lms-notification-service
+    ports:
+      - "8085:8085"
+    volumes:
+      - notification-data:/data
+    networks:
+      - lms-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8085/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    image: lms/api-gateway:1.0.0
+    container_name: lms-api-gateway
+    environment:
+      <<: *common-env
+      AUTH_SERVICE_URL: "http://auth-service:8081"
+      STUDENT_SERVICE_URL: "http://student-service:8082"
+      COURSE_SERVICE_URL: "http://course-service:8083"
+      ASSIGNMENT_SERVICE_URL: "http://assignment-service:8084"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:8085"
+    ports:
+      - "8080:8080"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      student-service:
+        condition: service_healthy
+      course-service:
+        condition: service_healthy
+      assignment-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    networks:
+      - lms-net
+
+networks:
+  lms-net:
+    driver: bridge
+
+volumes:
+  auth-data:
+  student-data:
+  course-data:
+  assignment-data:
+  notification-data:
