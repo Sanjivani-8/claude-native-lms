@@ -11,6 +11,11 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAMESPACE: ${{ github.repository_owner }}/lms
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   # ---------------------------------------------------------------------------
   # 1. Build + unit test every module, in parallel, with a shared Maven cache.
