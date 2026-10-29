@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAMESPACE: ${{ github.repository_owner }}/lms
+  IMAGE_NAMESPACE: sanjivani-8/lms
 
 permissions:
   contents: read
