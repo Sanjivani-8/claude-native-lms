@@ -81,15 +81,15 @@ jobs:
           java-version: "11"
           cache: maven
       - name: Sonar scan (whole reactor)
-          env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          run: |
-            mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-              -Dsonar.projectKey=Sanjivani-8_claude-native-lms \
-              -Dsonar.organization=sanjivani-8 \
-              -Dsonar.host.url="$SONAR_HOST_URL" \
-              -Dsonar.token="$SONAR_TOKEN"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=Sanjivani-8_claude-native-lms \
+            -Dsonar.organization=sanjivani-8 \
+            -Dsonar.host.url="$SONAR_HOST_URL" \
+            -Dsonar.token="$SONAR_TOKEN"
 
   # ---------------------------------------------------------------------------
   # 3. Software Composition Analysis (SCA) — scan dependencies (pom.xml trees)
