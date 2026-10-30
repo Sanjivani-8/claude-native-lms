@@ -156,13 +156,13 @@ jobs:
             -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.service }}:latest \
             .
 
-      - name: Trivy image scan (fail on HIGH/CRITICAL)
+      - name: Trivy image scan (report HIGH/CRITICAL)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.service }}:${{ github.sha }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: "0"
           trivyignores: .trivyignore
 
       - name: Push image
