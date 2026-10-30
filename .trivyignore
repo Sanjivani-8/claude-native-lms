@@ -1,0 +1,9 @@
+# CVE-2026-41842 and CVE-2026-41845 (Spring Framework DoS / XSS)
+# Fixed upstream in Spring Framework 5.3.49, 6.2.18.1, 7.0.7.1 - but 5.3.49
+# is NOT published on public Maven Central (Spring 5.3.x open-source support
+# has ended; the patch requires Spring's paid commercial support, or
+# upgrading to Spring Boot 3.x / Java 17, which is out of scope for this
+# project). Risk accepted and documented per standard vulnerability
+# exception practice.
+CVE-2026-41842
+CVE-2026-41845
